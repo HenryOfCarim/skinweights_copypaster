@@ -4,7 +4,7 @@ from .op_copypaste_weights import get_vertex_indices, copy_weights_from_vtx, pas
 bl_info = {
     "name": "Skin Weights CopyPaster",
     "version": (0, 0, 1),
-    "blender": (2, 8, 0),
+    "blender": (2, 80, 0),
     "location": "View 3D > Sidebar > Item Tab > Skin Weights CopyPaster",
     "description": "Copies and paste weights from selected vertices",
     "category": "Rigging",
@@ -22,10 +22,13 @@ class SWCopyPaster_PT(bpy.types.Panel):
         return context.active_object and context.mode in {'EDIT_MESH', 'PAINT_WEIGHT'}
 
     def draw(self, context):
+        scn = context.scene
+        swp_settings = scn.sw_copypaster.settings
         layout = self.layout
         row = layout.row(align=True)
         row.operator("object.copy_skin_weights_op", text="Copy Weights")
         row.operator("object.paste_skin_weights_op", text="Paste Weights")
+        layout.prop(swp_settings, "clear_vertex_groups")
 
 
 class SWCVertexGroupData(bpy.types.PropertyGroup):

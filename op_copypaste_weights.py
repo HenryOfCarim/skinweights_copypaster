@@ -49,10 +49,14 @@ def copy_weights_from_vtx(obj, vtx_index):
 
 def paste_copied_weights(obj, weights_col, target_indices):
     # Paste weights to the target vertex
+    settings = bpy.context.scene.sw_copypaster.settings
     vertex_groups = obj.vertex_groups
     current_mode = bpy.context.object.mode
     bpy.ops.object.mode_set(mode='OBJECT')
     for i in target_indices:
+        if settings.clear_vertex_groups:
+            for group in vertex_groups:
+                group.remove([i])
         for wi in weights_col:
             print(wi.group_name)
             vertex_groups[wi.group_name].add([i], wi.weight, 'REPLACE')
