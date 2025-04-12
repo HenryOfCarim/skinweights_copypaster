@@ -29,7 +29,7 @@ def get_vertex_indices():
 
 
 def copy_weights_from_vtx(obj, vtx_index):
-    weights_col = bpy.context.scene.sw_copypaster
+    weights_col = bpy.context.scene.sw_copypaster.clipboard
     weights_col.clear()
     weights = []
     vertex_groups = obj.vertex_groups

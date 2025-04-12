@@ -7,15 +7,15 @@ bl_info = {
     "blender": (2, 8, 0),
     "location": "View 3D > Sidebar > Item Tab > Skin Weights CopyPaster",
     "description": "Copies and paste weights from selected vertices",
-    "category": "Object",
+    "category": "Rigging",
 }
 
 
-class SWCopyPaster_PT_main(bpy.types.Panel):
+class SWCopyPaster_PT(bpy.types.Panel):
+    bl_label = "Skin Weights Copypaster"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Item"
-    bl_label = "Skin Weights Copypaster"
 
     @classmethod
     def poll(cls, context):
@@ -28,21 +28,26 @@ class SWCopyPaster_PT_main(bpy.types.Panel):
         row.operator("object.paste_skin_weights_op", text="Paste Weights")
 
 
-class SWeightsPropertyGroup(bpy.types.PropertyGroup):
+class SWCVertexGroupData(bpy.types.PropertyGroup):
     vertex_index: bpy.props.IntProperty(name="Vertex Group ID")
     group_name: bpy.props.StringProperty(name="Group Name")
     weight: bpy.props.FloatProperty(name="Skin Weights")
 
 
-class SWCopyPasterPropreties(bpy.types.PropertyGroup):
+class SWCPropreties(bpy.types.PropertyGroup):
     clear_vertex_groups: bpy.props.BoolProperty(
         name="Clear vertex groups",
         description="Clear all vertex groups before paste",
         default=False)
 
 
+class SWCopyPaster(bpy.types.PropertyGroup):
+    clipboard: bpy.props.CollectionProperty(type=SWCVertexGroupData)
+    settings: bpy.props.PointerProperty(type=SWCPropreties)
+
+
 class CopySkinWeights(bpy.types.Operator):
-    """Copy skin weights from a"""
+    """Copy skin weights from a vertex"""
     bl_idname = "object.copy_skin_weights_op"
     bl_label = "Copy skin weights"
 
@@ -60,17 +65,17 @@ class CopySkinWeights(bpy.types.Operator):
 
 
 class PasteSkinWeights(bpy.types.Operator):
-    """Tooltip"""
+    """Past copied skin weights to selected vertices"""
     bl_idname = "object.paste_skin_weights_op"
     bl_label = "Paste skin weights"
 
     @classmethod
     def poll(cls, context):
-        weights = context.scene.sw_copypaster
+        weights = context.scene.sw_copypaster.clipboard
         return context.active_object is not None and weights
 
     def execute(self, context):
-        weights = context.scene.sw_copypaster
+        weights = context.scene.sw_copypaster.clipboard
         ob = context.active_object
         selected_indices = get_vertex_indices()
         if selected_indices:
@@ -80,10 +85,12 @@ class PasteSkinWeights(bpy.types.Operator):
 
 
 classes = [
-    SWCopyPaster_PT_main,
     CopySkinWeights,
     PasteSkinWeights,
-    SWeightsPropertyGroup,
+    SWCVertexGroupData,
+    SWCPropreties,
+    SWCopyPaster,
+    SWCopyPaster_PT,
 ]
 
 
@@ -91,7 +98,7 @@ def register():
     from bpy.utils import register_class
     for cls in classes:
         register_class(cls)
-    bpy.types.Scene.sw_copypaster = bpy.props.CollectionProperty(type=SWeightsPropertyGroup)
+    bpy.types.Scene.sw_copypaster = bpy.props.PointerProperty(type=SWCopyPaster)
 
 
 def unregister():
