@@ -29,7 +29,7 @@ class SWCopyPaster_PT(bpy.types.Panel):
         row.operator("object.copy_skin_weights_op", text="Copy Weights")
         row.operator("object.paste_skin_weights_op", text="Paste Weights")
         layout.prop(swp_settings, "clear_vertex_groups", text="Clear existing weights")
-        layout.prop(swp_settings, "normalize_weights", text="Normazile weights")
+        layout.prop(swp_settings, "normalize_weights", text="Normalize weights")
 
 
 class SWCVertexGroupData(bpy.types.PropertyGroup):
