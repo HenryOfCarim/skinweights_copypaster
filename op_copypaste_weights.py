@@ -45,6 +45,23 @@ class PasteSkinWeights(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class SelectLoops(bpy.types.Operator):
+    bl_idname = "object.select_loops_op"
+    bl_label = "Select edge loop"
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        if obj.type == 'MESH':
+            return True
+        else:
+            return False
+
+    def execute(self, context):
+        select_loops()
+        return {'FINISHED'}
+
+
 def get_vertex_indices(obj):
     target_vertices = []
     # Get the current mode
@@ -122,3 +139,11 @@ def clear_vertex_groups(obj, vtx_index):
             # print(f"Removed vertex {vtx_index} from group '{group.name}'")
         except RuntimeError:
             pass
+
+
+def select_loops():
+    cur_edit_mode = bpy.context.object.mode
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_mode(type='EDGE')
+    bpy.ops.mesh.loop_multi_select(ring=False)
+    bpy.ops.object.mode_set(mode=cur_edit_mode)
