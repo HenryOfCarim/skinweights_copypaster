@@ -16,6 +16,7 @@ class CopySkinWeights(bpy.types.Operator):
         selected_indices = get_vertex_indices(obj)
         if selected_indices:
             copy_weights_from_vtx(obj, selected_indices[0])
+            self.report({'INFO'}, f"Copied form vertex {selected_indices[0]}")
         return {'FINISHED'}
 
 
@@ -42,6 +43,7 @@ class PasteSkinWeights(bpy.types.Operator):
             if settings.normalize_weights:
                 for i in selected_indices:
                     normalize_weights(obj, i)
+        self.report({'INFO'}, "Pasted")
         return {'FINISHED'}
 
 
@@ -68,8 +70,6 @@ def get_vertex_indices(obj):
     current_mode = bpy.context.object.mode
     # Ensure you're in Object Mode
     bpy.ops.object.mode_set(mode='OBJECT')
-    # Get the active object
-    # obj = bpy.context.active_object
     # Switch to Edit Mode to access vertex selection
     bpy.ops.object.mode_set(mode='EDIT')
     # Access the mesh data in Edit Mode
@@ -83,10 +83,9 @@ def get_vertex_indices(obj):
 
 def copy_weights_from_vtx(obj, vtx_index):
     """This function copies skin weight data from a selected vertex to the clipboard"""
-    # Get the custom vertex groups clipboard collection
-    weights_col = bpy.context.scene.sw_copypaster.clipboard
-    # Clear it before coping
-    weights_col.clear()
+    swc_clipboard = bpy.context.scene.sw_copypaster.clipboard
+    # Clear clipboard before coping
+    swc_clipboard.clear()
     # Get vertex group from the active object
     vertex_groups = obj.vertex_groups
     for group in vertex_groups:
@@ -95,7 +94,7 @@ def copy_weights_from_vtx(obj, vtx_index):
             if group.weight(vtx_index) == 0:
                 continue
             # Form and item for the vertex groups clipboard collection
-            item = weights_col.add()
+            item = swc_clipboard.add()
             item.vertex_index = group.index
             item.group_name = group.name
             item.weight = group.weight(vtx_index)
