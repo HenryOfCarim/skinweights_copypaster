@@ -64,6 +64,42 @@ class SelectLoops(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class SetWeightOperator(bpy.types.Operator):
+    bl_idname = "object.set_weight"
+    bl_label = "Set Weight"
+    bl_description = "Set weight to selected vertices"
+    weight: bpy.props.FloatProperty()
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        if obj.type == 'MESH' and obj.vertex_groups.active:
+            return True
+        else:
+            return False
+
+    def execute(self, context):
+        obj = context.active_object
+        vertex_groups = obj.vertex_groups
+        active_vg = obj.vertex_groups.active
+        selected_indices = get_vertex_indices(obj)
+        if selected_indices:
+            for vtx_index in selected_indices:
+                wgroups = {}
+                for group in vertex_groups:
+                    try:
+                        if group.weight(vtx_index) == 0:
+                            continue
+                        wgroups[group.name] = group.weight(vtx_index)
+                    except RuntimeError:
+                        # Vertex is not in this group
+                        pass
+                updated_wgroups = scale_values(self.weight, active_vg.name, wgroups)
+                for name, weight in updated_wgroups.items():
+                    vertex_groups[name].add([vtx_index], weight, 'REPLACE')
+        return {'FINISHED'}
+
+
 def get_vertex_indices(obj):
     target_vertices = []
     # Get the current mode
@@ -146,3 +182,15 @@ def select_loops():
     bpy.ops.mesh.select_mode(type='EDGE')
     bpy.ops.mesh.loop_multi_select(ring=False)
     bpy.ops.object.mode_set(mode=cur_edit_mode)
+
+
+def scale_values(new_value, active_vg, vertex_groups):
+    sum_of_others = sum(vertex_groups.values()) - vertex_groups[active_vg]
+    updated_values = {}
+    for name, weight in vertex_groups.items():
+        if name == active_vg:
+            updated_values[name] = new_value
+        else:
+            scaled_value = weight * (1 - new_value) / sum_of_others
+            updated_values[name] = scaled_value
+    return updated_values
