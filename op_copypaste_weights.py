@@ -68,7 +68,12 @@ class SetWeightOperator(bpy.types.Operator):
     bl_idname = "object.set_weight"
     bl_label = "Set Weight"
     bl_description = "Set weight to selected vertices"
-    weight: bpy.props.FloatProperty()
+    bl_options = {'REGISTER', 'UNDO'}
+    weight: bpy.props.FloatProperty(
+        name="Set skin weight",
+        min=0.0,
+        max=1.0
+    )
 
     @classmethod
     def poll(cls, context):
@@ -88,8 +93,8 @@ class SetWeightOperator(bpy.types.Operator):
                 wgroups = {}
                 for group in vertex_groups:
                     try:
-                        if group.weight(vtx_index) == 0:
-                            continue
+                        # if group.weight(vtx_index) == 0:
+                        #    continue
                         wgroups[group.name] = group.weight(vtx_index)
                     except RuntimeError:
                         # Vertex is not in this group
