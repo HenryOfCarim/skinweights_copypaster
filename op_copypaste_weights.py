@@ -6,6 +6,7 @@ class CopySkinWeights(bpy.types.Operator):
     """Copy skin weights from a vertex"""
     bl_idname = "object.copy_skin_weights_op"
     bl_label = "Copy skin weights"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -24,6 +25,7 @@ class PasteSkinWeights(bpy.types.Operator):
     """Paste copied skin weights to selected vertices"""
     bl_idname = "object.paste_skin_weights_op"
     bl_label = "Paste skin weights"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -50,6 +52,7 @@ class PasteSkinWeights(bpy.types.Operator):
 class SelectLoops(bpy.types.Operator):
     bl_idname = "object.select_loops_op"
     bl_label = "Select edge loop"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
