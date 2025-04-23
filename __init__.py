@@ -1,5 +1,5 @@
 import bpy
-from .op_copypaste_weights import CopySkinWeights, PasteSkinWeights, SelectLoops
+from .op_copypaste_weights import CopySkinWeights, PasteSkinWeights, SelectLoops, SetWeightOperator
 
 bl_info = {
     "name": "Skin Weights CopyPaster",
@@ -30,7 +30,12 @@ class SW_PT_CopyPaster(bpy.types.Panel):
         row.operator("object.paste_skin_weights_op", text="Paste Weights")
         layout.prop(swp_settings, "clear_vertex_groups", text="Clear existing weights")
         layout.prop(swp_settings, "normalize_weights", text="Normalize weights")
+        layout.label(text="Select")
         layout.operator("object.select_loops_op", text="Select Loops")
+        layout.label(text="Set skin weights value")
+        row = layout.row(align=True)
+        for weight in [0, 0.1, 0.25, 0.5, 0.75, 1.0]:
+            row.operator("object.set_weight", text=str(weight)).weight = weight
 
 
 class SWCVertexGroupData(bpy.types.PropertyGroup):
@@ -59,6 +64,7 @@ classes = [
     CopySkinWeights,
     PasteSkinWeights,
     SelectLoops,
+    SetWeightOperator,
     SWCVertexGroupData,
     SWCPropreties,
     SWCopyPaster,

@@ -6,6 +6,7 @@ class CopySkinWeights(bpy.types.Operator):
     """Copy skin weights from a vertex"""
     bl_idname = "object.copy_skin_weights_op"
     bl_label = "Copy skin weights"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -24,6 +25,7 @@ class PasteSkinWeights(bpy.types.Operator):
     """Paste copied skin weights to selected vertices"""
     bl_idname = "object.paste_skin_weights_op"
     bl_label = "Paste skin weights"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -50,6 +52,7 @@ class PasteSkinWeights(bpy.types.Operator):
 class SelectLoops(bpy.types.Operator):
     bl_idname = "object.select_loops_op"
     bl_label = "Select edge loop"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -61,6 +64,49 @@ class SelectLoops(bpy.types.Operator):
 
     def execute(self, context):
         select_loops()
+        return {'FINISHED'}
+
+
+class SetWeightOperator(bpy.types.Operator):
+    bl_idname = "object.set_weight"
+    bl_label = "Set Weight"
+    bl_description = "Set weight to selected vertices"
+    bl_options = {'REGISTER', 'UNDO'}
+    weight: bpy.props.FloatProperty(
+        name="Set skin weight",
+        min=0.0,
+        max=1.0,
+        step=0.05,
+        precision=3
+    )
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        if obj.type == 'MESH' and obj.vertex_groups.active:
+            return True
+        else:
+            return False
+
+    def execute(self, context):
+        obj = context.active_object
+        vertex_groups = obj.vertex_groups
+        active_vg = obj.vertex_groups.active
+        selected_indices = get_vertex_indices(obj)
+        if selected_indices:
+            for vtx_index in selected_indices:
+                wgroups = {}
+                for group in vertex_groups:
+                    try:
+                        # if group.weight(vtx_index) == 0:
+                        #    continue
+                        wgroups[group.name] = group.weight(vtx_index)
+                    except RuntimeError:
+                        # Vertex is not in this group
+                        pass
+                updated_wgroups = scale_values(self.weight, active_vg.name, wgroups)
+                for name, weight in updated_wgroups.items():
+                    vertex_groups[name].add([vtx_index], weight, 'REPLACE')
         return {'FINISHED'}
 
 
@@ -146,3 +192,15 @@ def select_loops():
     bpy.ops.mesh.select_mode(type='EDGE')
     bpy.ops.mesh.loop_multi_select(ring=False)
     bpy.ops.object.mode_set(mode=cur_edit_mode)
+
+
+def scale_values(new_value, active_vg, vertex_groups):
+    sum_of_others = sum(vertex_groups.values()) - vertex_groups[active_vg]
+    updated_values = {}
+    for name, weight in vertex_groups.items():
+        if name == active_vg:
+            updated_values[name] = new_value
+        else:
+            scaled_value = weight * (1 - new_value) / sum_of_others
+            updated_values[name] = scaled_value
+    return updated_values
