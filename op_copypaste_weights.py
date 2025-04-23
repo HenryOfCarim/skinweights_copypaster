@@ -75,7 +75,9 @@ class SetWeightOperator(bpy.types.Operator):
     weight: bpy.props.FloatProperty(
         name="Set skin weight",
         min=0.0,
-        max=1.0
+        max=1.0,
+        step=0.05,
+        precision=3
     )
 
     @classmethod
