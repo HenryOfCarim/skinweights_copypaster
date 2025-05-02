@@ -73,11 +73,20 @@ class SetWeightOperator(bpy.types.Operator):
     bl_description = "Set weight to selected vertices"
     bl_options = {'REGISTER', 'UNDO'}
     weight: bpy.props.FloatProperty(
-        name="Set skin weight",
+        name="Set Weight",
         min=0.0,
         max=1.0,
         step=0.05,
         precision=3
+    )
+    blend_mode: bpy.props.EnumProperty(
+        name="Set Blend Mode",
+        description="Algorithm for setting new weights.",
+        items=[('REPLACE', "Replace", "Set selected skin weights value", 0),
+               ('ADD', "Add", "Adds selected skin weights value to existing one", 1),
+               ('SUBTRACT', "Subtract","Subtruct selected skin weights value from existing one", 2),
+               ],
+        default='REPLACE'
     )
 
     @classmethod
@@ -98,13 +107,10 @@ class SetWeightOperator(bpy.types.Operator):
                 wgroups = {}
                 for group in vertex_groups:
                     try:
-                        # if group.weight(vtx_index) == 0:
-                        #    continue
                         wgroups[group.name] = group.weight(vtx_index)
                     except RuntimeError:
-                        # Vertex is not in this group
                         pass
-                updated_wgroups = scale_values(self.weight, active_vg.name, wgroups)
+                updated_wgroups = scale_values(self.weight, active_vg.name, wgroups, self.blend_mode)
                 for name, weight in updated_wgroups.items():
                     vertex_groups[name].add([vtx_index], weight, 'REPLACE')
         return {'FINISHED'}
@@ -181,7 +187,6 @@ def clear_vertex_groups(obj, vtx_index):
     for group in vertex_groups:
         try:
             group.remove([vtx_index])
-            # print(f"Removed vertex {vtx_index} from group '{group.name}'")
         except RuntimeError:
             pass
 
@@ -194,13 +199,28 @@ def select_loops():
     bpy.ops.object.mode_set(mode=cur_edit_mode)
 
 
-def scale_values(new_value, active_vg, vertex_groups):
+def clamp(n, min, max):
+    if n < min:
+        return min
+    elif n > max:
+        return max
+    else:
+        return n
+
+
+def scale_values(new_weight, active_vg, vertex_groups, blend_mode):
     sum_of_others = sum(vertex_groups.values()) - vertex_groups[active_vg]
     updated_values = {}
     for name, weight in vertex_groups.items():
         if name == active_vg:
-            updated_values[name] = new_value
-        else:
-            scaled_value = weight * (1 - new_value) / sum_of_others
+            if blend_mode == 'ADD':
+                new_weight = clamp((weight + new_weight), 0, 1)
+            elif blend_mode == 'SUBTRACT':
+                new_weight = clamp((weight - new_weight), 0, 1)
+            updated_values[name] = new_weight
+            break
+    for name, weight in vertex_groups.items():
+        if name != active_vg:
+            scaled_value = weight * (1 - new_weight) / sum_of_others
             updated_values[name] = scaled_value
     return updated_values
