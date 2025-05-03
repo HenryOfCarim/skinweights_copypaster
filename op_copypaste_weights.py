@@ -110,6 +110,9 @@ class SetWeightOperator(bpy.types.Operator):
                         wgroups[group.name] = group.weight(vtx_index)
                     except RuntimeError:
                         pass
+                # Fix for issue that happens in scale weights if the active vg doesn't exsist yet
+                if active_vg.name not in wgroups.keys():
+                    wgroups[active_vg.name] = 0
                 updated_wgroups = scale_values(self.weight, active_vg.name, wgroups, self.blend_mode)
                 for name, weight in updated_wgroups.items():
                     vertex_groups[name].add([vtx_index], weight, 'REPLACE')
