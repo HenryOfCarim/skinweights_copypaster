@@ -1,12 +1,12 @@
 schema_version = "1.0.0"
 id = "skin_weights_copypaster"
 name = "Skin Weights Copypaster"
-version = "0.2.1"
+version = "0.3.0"
 tagline = "Copies skin weights from one vertex to selection"
 maintainer = "HenryOfCarim"
 type = "add-on"
 tags = ["Rigging"]
-blender_version_min = "3.1.0"
+blender_version_min = "4.2.0"
 license = ["SPDX:GPL-3.0-or-later"]
 website = "https://github.com/HenryOfCarim/skinweights_copypaster"
 copyright = ["2025 HenryOfCarim"]
