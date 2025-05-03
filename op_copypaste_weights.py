@@ -73,11 +73,20 @@ class SetWeightOperator(bpy.types.Operator):
     bl_description = "Set weight to selected vertices"
     bl_options = {'REGISTER', 'UNDO'}
     weight: bpy.props.FloatProperty(
-        name="Set skin weight",
+        name="Set Weight",
         min=0.0,
         max=1.0,
         step=0.05,
         precision=3
+    )
+    blend_mode: bpy.props.EnumProperty(
+        name="Set Blend Mode",
+        description="Algorithm for setting new weights.",
+        items=[('REPLACE', "Replace", "Set selected skin weights value", 0),
+               ('ADD', "Add", "Adds selected skin weights value to existing one", 1),
+               ('SUBTRACT', "Subtract","Subtruct selected skin weights value from existing one", 2),
+               ],
+        default='REPLACE'
     )
 
     @classmethod
@@ -98,13 +107,13 @@ class SetWeightOperator(bpy.types.Operator):
                 wgroups = {}
                 for group in vertex_groups:
                     try:
-                        # if group.weight(vtx_index) == 0:
-                        #    continue
                         wgroups[group.name] = group.weight(vtx_index)
                     except RuntimeError:
-                        # Vertex is not in this group
                         pass
-                updated_wgroups = scale_values(self.weight, active_vg.name, wgroups)
+                # Fix for issue that happens in scale weights if the active vg doesn't exsist yet
+                if active_vg.name not in wgroups.keys():
+                    wgroups[active_vg.name] = 0
+                updated_wgroups = scale_values(self.weight, active_vg.name, wgroups, self.blend_mode)
                 for name, weight in updated_wgroups.items():
                     vertex_groups[name].add([vtx_index], weight, 'REPLACE')
         return {'FINISHED'}
@@ -128,7 +137,9 @@ def get_vertex_indices(obj):
 
 
 def copy_weights_from_vtx(obj, vtx_index):
-    """This function copies skin weight data from a selected vertex to the clipboard"""
+    """
+    This function copies skin weight data from a selected vertex to the clipboard
+    """
     swc_clipboard = bpy.context.scene.sw_copypaster.clipboard
     # Clear clipboard before coping
     swc_clipboard.clear()
@@ -150,22 +161,22 @@ def copy_weights_from_vtx(obj, vtx_index):
 
 
 def paste_copied_weights(obj, skin_weights_buff, target_indices):
-    """This function pastes sking weights from the clipboard to the target vertex"""
+    """
+    This function pastes sking weights from the clipboard to the target vertex
+    """
     vertex_groups = obj.vertex_groups
-    # Switch to Object mode
     current_mode = bpy.context.object.mode
+    # Switch to Object mode
     bpy.ops.object.mode_set(mode='OBJECT')
     for i in target_indices:
         for sw in skin_weights_buff:
             try:
                 vertex_groups[sw.group_name].add([i], sw.weight, 'REPLACE')
             except KeyError:
-                # print("There is no vertex group", sw.group_name)
                 obj.vertex_groups.new(name=sw.group_name)
                 vertex_groups[sw.group_name].add([i], sw.weight, 'REPLACE')
     # Switch back to the mode that was before editing
     bpy.ops.object.mode_set(mode=current_mode)
-    print("Weights copied and pasted successfully!")
 
 
 def normalize_weights(obj, vtx_index):
@@ -173,7 +184,7 @@ def normalize_weights(obj, vtx_index):
     total_weight = sum([g.weight for g in v.groups])
     if total_weight > 0:
         for g in v.groups:
-            g.weight /= total_weight  # Normalize weight
+            g.weight /= total_weight
 
 
 def clear_vertex_groups(obj, vtx_index):
@@ -181,7 +192,6 @@ def clear_vertex_groups(obj, vtx_index):
     for group in vertex_groups:
         try:
             group.remove([vtx_index])
-            # print(f"Removed vertex {vtx_index} from group '{group.name}'")
         except RuntimeError:
             pass
 
@@ -194,13 +204,34 @@ def select_loops():
     bpy.ops.object.mode_set(mode=cur_edit_mode)
 
 
-def scale_values(new_value, active_vg, vertex_groups):
+def clamp(n, min, max):
+    if n < min:
+        return min
+    elif n > max:
+        return max
+    else:
+        return n
+
+
+def scale_values(new_weight, active_vg, vertex_groups, blend_mode):
+    """
+    This function sets new_weight value for an active vertex group and rescalse other groups
+    to keep sum of weights equal 1.0
+    """
     sum_of_others = sum(vertex_groups.values()) - vertex_groups[active_vg]
     updated_values = {}
+    # Need to finalize and set weights to the selected vertex group before scaling
     for name, weight in vertex_groups.items():
         if name == active_vg:
-            updated_values[name] = new_value
-        else:
-            scaled_value = weight * (1 - new_value) / sum_of_others
+            if blend_mode == 'ADD':
+                new_weight = clamp((weight + new_weight), 0, 1)
+            elif blend_mode == 'SUBTRACT':
+                new_weight = clamp((weight - new_weight), 0, 1)
+            updated_values[name] = new_weight
+            break
+    # The second loop scales weights
+    for name, weight in vertex_groups.items():
+        if name != active_vg:
+            scaled_value = weight * (1 - new_weight) / sum_of_others
             updated_values[name] = scaled_value
     return updated_values
