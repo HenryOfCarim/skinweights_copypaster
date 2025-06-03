@@ -50,6 +50,9 @@ class PasteSkinWeights(bpy.types.Operator):
 
 
 class SelectLoops(bpy.types.Operator):
+    """
+    Select an edge loop if 2 or more vertices from it were selected
+    """
     bl_idname = "object.select_loops_op"
     bl_label = "Select edge loop"
     bl_options = {'REGISTER', 'UNDO'}
@@ -64,6 +67,38 @@ class SelectLoops(bpy.types.Operator):
 
     def execute(self, context):
         select_loops()
+        return {'FINISHED'}
+
+
+class SelectVGVertices(bpy.types.Operator):
+    """
+    Select all vertices from the active vertex group
+    """
+    bl_idname = "object.select_vg_vertices"
+    bl_label = "Select vertices from vertex group"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        if obj.type == 'MESH' and obj.vertex_groups.active:
+            return True
+        else:
+            return False
+
+    def execute(self, context):
+        obj = context.active_object
+        current_mode = bpy.context.object.mode
+        cunrent_vg = obj.vertex_groups.active
+        bpy.ops.object.mode_set(mode='OBJECT')
+        # Deselect all vertices before selecting
+        for v in obj.data.vertices:
+            v.select = False
+        for v in obj.data.vertices:
+            for g in v.groups:
+                if g.group == cunrent_vg.index:
+                    v.select = True
+        bpy.ops.object.mode_set(mode=current_mode)
         return {'FINISHED'}
 
 
@@ -99,6 +134,8 @@ class SetWeightOperator(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.active_object
+        current_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode='WEIGHT_PAINT')
         vertex_groups = obj.vertex_groups
         active_vg = obj.vertex_groups.active
         selected_indices = get_vertex_indices(obj)
@@ -116,6 +153,7 @@ class SetWeightOperator(bpy.types.Operator):
                 updated_wgroups = scale_values(self.weight, active_vg.name, wgroups, self.blend_mode)
                 for name, weight in updated_wgroups.items():
                     vertex_groups[name].add([vtx_index], weight, 'REPLACE')
+        bpy.ops.object.mode_set(mode=current_mode)
         return {'FINISHED'}
 
 
