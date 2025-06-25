@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 id = "skin_weights_copypaster"
 name = "Skin Weights Copypaster"
-version = "0.3.0"
+version = "0.3.2"
 tagline = "Copies skin weights from one vertex to selection"
 maintainer = "HenryOfCarim"
 type = "add-on"

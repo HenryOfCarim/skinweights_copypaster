@@ -4,7 +4,7 @@ from .op_copypaste_weights import (CopySkinWeights, PasteSkinWeights, SelectLoop
 
 bl_info = {
     "name": "Skin Weights CopyPaster",
-    "version": (0, 3, 0),
+    "version": (0, 3, 2),
     "blender": (2, 80, 0),
     "location": "View 3D > Sidebar > Item Tab > Skin Weights CopyPaster",
     "description": "Copies and paste weights from selected vertices",
