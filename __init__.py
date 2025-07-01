@@ -34,7 +34,7 @@ class SW_PT_CopyPaster(bpy.types.Panel):
         layout.label(text="Select")
         row = layout.row(align=True)
         row.operator("object.select_loops_op", text="Select Loops")
-        row.operator("object.select_vg_vertices", text="Select Vertex Group")
+        row.operator("object.select_vg_vertices", text="", icon='GROUP_VERTEX')
         layout.label(text="Set skin weights value")
         row = layout.row(align=True)
         for weight in [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]:

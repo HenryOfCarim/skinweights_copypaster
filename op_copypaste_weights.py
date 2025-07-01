@@ -37,6 +37,8 @@ class PasteSkinWeights(bpy.types.Operator):
         weights = context.scene.sw_copypaster.clipboard
         obj = context.active_object
         selected_indices = get_vertex_indices(obj)
+        current_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode='WEIGHT_PAINT')
         if selected_indices:
             if settings.clear_vertex_groups:
                 for i in selected_indices:
@@ -45,6 +47,7 @@ class PasteSkinWeights(bpy.types.Operator):
             if settings.normalize_weights:
                 for i in selected_indices:
                     normalize_weights(obj, i)
+        bpy.ops.object.mode_set(mode=current_mode)
         self.report({'INFO'}, "Pasted")
         return {'FINISHED'}
 
