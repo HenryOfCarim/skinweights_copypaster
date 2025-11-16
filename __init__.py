@@ -7,7 +7,7 @@ bl_info = {
     "version": (0, 3, 2),
     "blender": (2, 80, 0),
     "location": "View 3D > Sidebar > Item Tab > Skin Weights CopyPaster",
-    "description": "Copies and paste weights from selected vertices",
+    "description": "Copies and paste weights from active vertex group to active vertex group",
     "category": "Rigging",
 }
 
@@ -44,7 +44,12 @@ class SW_PT_CopyPaster(bpy.types.Panel):
 class SWCVertexGroupData(bpy.types.PropertyGroup):
     vertex_index: bpy.props.IntProperty(name="Vertex Group ID")
     group_name: bpy.props.StringProperty(name="Group Name")
-    weight: bpy.props.FloatProperty(name="Skin Weights")
+    weight: bpy.props.FloatProperty(name="Skin Weights", default=0.0, min=0.0, max=1.0, precision=6)
+
+
+class SWCVertexWeights(bpy.types.PropertyGroup):
+    """Stores all vertex group weights for a single vertex"""
+    vertex_data: bpy.props.CollectionProperty(type=SWCVertexGroupData)
 
 
 class SWCPropreties(bpy.types.PropertyGroup):
@@ -60,6 +65,7 @@ class SWCPropreties(bpy.types.PropertyGroup):
 
 class SWCopyPaster(bpy.types.PropertyGroup):
     clipboard: bpy.props.CollectionProperty(type=SWCVertexGroupData)
+    per_vertex_clipboard: bpy.props.CollectionProperty(type=SWCVertexWeights)
     settings: bpy.props.PointerProperty(type=SWCPropreties)
 
 
@@ -70,6 +76,7 @@ classes = [
     SelectVGVertices,
     SetWeightOperator,
     SWCVertexGroupData,
+    SWCVertexWeights,
     SWCPropreties,
     SWCopyPaster,
     SW_PT_CopyPaster,
